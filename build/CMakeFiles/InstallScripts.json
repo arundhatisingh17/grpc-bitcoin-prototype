@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/induranasingh/grpc-bitcoin-prototype/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

@@ -63,6 +63,11 @@ public:
     // Add a block received from another node (after validation)
     bool add_block(const BlockData& block);
 
+    // Resolve a fork: compare an incoming chain against ours.
+    // If the incoming chain is longer, find the fork point and replace.
+    // Returns true if our chain was replaced.
+    bool resolve_fork(const std::vector<BlockData>& incoming_chain);
+
     // --- Validation ---
     // Validate a block (check PoW, check transactions)
     bool validate_block(const BlockData& block) const;
@@ -100,6 +105,9 @@ private:
 
     // Check if a hash meets the difficulty target (has enough leading zeros)
     bool meets_difficulty(const std::string& hash, uint32_t difficulty) const;
+
+    // Walk both chains from the start and find where they diverge
+    size_t find_fork_point(const std::vector<BlockData>& incoming_chain) const;
 };
 
 #endif // NODE_H

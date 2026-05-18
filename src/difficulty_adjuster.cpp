@@ -74,3 +74,25 @@ uint32_t DifficultyAdjuster::adjust_difficulty() {
 
   return difficulty_;
 }
+
+uint32_t DifficultyAdjuster::compute_from_chain(const std::vector<uint64_t>& block_timestamps) {
+  solve_times_.clear();
+
+  // We need at least 2 blocks to compute a time difference
+  if (block_timestamps.size() < 2) {
+    return difficulty_;
+  }
+
+  // Only look at the last N+1 blocks to compute N solve times
+  size_t start_idx = 0;
+  if (block_timestamps.size() > window_size_ + 1) {
+    start_idx = block_timestamps.size() - (window_size_ + 1);
+  }
+
+  for (size_t i = start_idx + 1; i < block_timestamps.size(); i++) {
+    double diff = static_cast<double>(block_timestamps[i] - block_timestamps[i - 1]);
+    solve_times_.push_back(diff);
+  }
+
+  return adjust_difficulty();
+}
