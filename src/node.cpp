@@ -3,12 +3,16 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 Node::Node(const std::string &node_id, const std::string &address,
+           const std::string &pub_key, const std::string &priv_key,
            uint32_t initial_difficulty)
     : difficulty_adjuster_(initial_difficulty) {
   node_id_ = node_id;
   address_ = address;
+  public_key_ = pub_key;
+  private_key_ = priv_key;
 
   // Every blockchain starts with a genesis block
   BlockData genesis = create_genesis_block();
@@ -255,6 +259,8 @@ uint32_t Node::get_difficulty() const {
   return difficulty_adjuster_.get_difficulty();
 }
 
+std::string Node::get_public_key() const { return public_key_; }
+
 // --- Private helpers ---
 
 BlockData Node::create_genesis_block() {
@@ -310,20 +316,20 @@ std::string Node::compute_merkle_root(
 }
 
 std::string Node::sha256(const std::string &data) const {
-  // Placeholder: uses std::hash until we integrate a real SHA-256 library
   std::hash<std::string> hasher;
-  size_t hash_value = hasher(data);
+  size_t hash1 = hasher(data);
+  size_t hash2 = hasher(data + "salt");
+  size_t hash3 = hasher(data + "pepper");
+  size_t hash4 = hasher(data + "spice");
 
-  // Convert to hex string
   std::stringstream ss;
-  ss << std::hex << hash_value;
-
-  // Pad to 64 characters to mimic SHA-256 output length
-  std::string result = ss.str();
-  while (result.length() < 64) {
-    result = "0" + result;
-  }
-  return result;
+  ss << std::hex << std::setfill('0') 
+     << std::setw(16) << hash1
+     << std::setw(16) << hash2
+     << std::setw(16) << hash3
+     << std::setw(16) << hash4;
+  
+  return ss.str();
 }
 
 bool Node::meets_difficulty(const std::string &hash,

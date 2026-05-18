@@ -1,0 +1,38 @@
+sequenceDiagram
+    autonumber
+    participant Main as main.cpp (Thread)
+    participant N0 as Honest Node 0
+    participant N3 as Cartel Node 3
+    
+    Note over N0, N3: Both Nodes start at Chain Length = 3
+
+    Note over Main: The Merchant Transaction (Honest Network)
+    Main->>Main: Create TX_A (10 BTC: Malice -> Merchant)
+    Main->>N0: add_transaction_to_mempool(TX_A)
+    Main->>N0: mine_block()
+    Note over N0: Honest Chain is now Length 4 (Includes TX_A)
+    Note over Main: Merchant sees Length 4 and provides the service.
+    
+    Note over Main: The Secret Attack (Cartel Network)
+    Main->>Main: Create TX_B (10 BTC: Malice -> Malice)
+    Main->>N3: add_transaction_to_mempool(TX_B)
+    Main->>N3: mine_block()
+    Note over N3: Cartel Chain is Length 4 (Includes TX_B, not TX_A)
+    
+    Main->>Main: Create Dummy TX
+    Main->>N3: add_transaction_to_mempool(Dummy TX)
+    Main->>N3: mine_block()
+    Note over N3: Cartel Chain is Length 5 (Longer than Honest!)
+    
+    Note over Main: The 51% Attack Broadcast
+    Main->>N3: get_chain()
+    N3-->>Main: Returns malicious chain (Length 5)
+    
+    Main->>N0: resolve_fork(malicious_chain)
+    Note over N0: Node 0 compares chains block by block
+    Note over N0: Finds fork point at Block 3
+    N0->>N0: Drops local Block 3 (Erases Merchant TX_A!)
+    N0->>N0: Appends malicious Block 3 and Block 4
+    N0-->>Main: Returns true (Reorganization Successful)
+    
+    Note over Main: The network now accepts Malice's fake transaction. The double spend is complete!

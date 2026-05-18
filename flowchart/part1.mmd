@@ -1,0 +1,50 @@
+sequenceDiagram
+    autonumber
+    participant Main as main.cpp (Thread)
+    participant N0 as Honest Node 0 (C++ Object)
+    participant S0 as gRPC Server 0
+    participant N9 as Idle Node 9 (C++ Object)
+    participant C9 as gRPC Client 9
+
+    Note over Main: Initialization Phase
+    Main->>N0: new Node("Honest_0", port: 50050)
+    Main->>N9: new Node("Idle_9", port: 50059)
+    Main->>S0: run_grpc_server(N0, 50050)
+    Note over S0: Server 0 binds to port and listens
+    
+    Note over Main: Coinbase Generation (Act 1)
+    Main->>Main: Create GeneratedTransaction (Coinbase)
+    Main->>N0: add_transaction_to_mempool(coinbase)
+    Main->>N0: mine_block()
+    Note over N0: Performs SHA-256 Proof of Work loop
+    Note over N0: Mempool cleared. Genesis Block & Block 1 saved to local std::vector chain
+    
+    Note over Main: Mining Race (Act 2)
+    Main->>Main: Create GeneratedTransaction (Alice -> Bob)
+    Main->>Main: simulate_mining_race()
+    Note over Main: Honest_0 wins the race
+    Main->>N0: add_transaction_to_mempool(tx)
+    Main->>N0: mine_block()
+    Note over N0: Block 2 saved to local chain
+    
+    Note over Main: Eventual Consistency Sync
+    Main->>C9: new NodeClient(target="0.0.0.0:50050")
+    Main->>N9: get_chain_length()
+    N9-->>Main: length = 1
+    
+    Main->>C9: get_blockchain(start_index = 1)
+    Note over C9: Serializes C++ int into Protobuf GetBlockchainRequest
+    C9->>S0: [HTTP/2 Network Call] GetBlockchain RPC
+    Note over S0: Deserializes Protobuf request
+    
+    S0->>N0: get_chain()
+    N0-->>S0: Returns std::vector<BlockData>
+    Note over S0: Serializes C++ structs into Protobuf GetBlockchainResponse
+    S0-->>C9: [HTTP/2 Network Call] Returns Response
+    Note over C9: Deserializes Response back to C++ std::vector<BlockData>
+    C9-->>Main: Returns missing blocks
+    
+    loop For each missing block
+        Main->>N9: add_block(block)
+    end
+    Note over N9: Node 9 is now perfectly synchronized!

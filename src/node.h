@@ -34,8 +34,10 @@ struct PeerInfo {
 
 class Node {
 public:
-    // Create a node with an ID, network address, and starting difficulty
-    Node(const std::string& node_id, const std::string& address, uint32_t initial_difficulty);
+    // Create a node with an ID, network address, keys, and starting difficulty
+    Node(const std::string& node_id, const std::string& address, 
+         const std::string& pub_key, const std::string& priv_key, 
+         uint32_t initial_difficulty);
 
     // --- Mempool ---
     // Add a transaction to the mempool (pending, unconfirmed)
@@ -80,10 +82,16 @@ public:
     std::string get_node_id() const;
     std::string get_address() const;
     uint32_t get_difficulty() const;
+    std::string get_public_key() const;
+
+    // Simple SHA-256 placeholder exposed for the visual race simulation
+    std::string sha256(const std::string& data) const;
 
 private:
     std::string node_id_;
     std::string address_;
+    std::string public_key_;
+    std::string private_key_;
 
     std::vector<BlockData> chain_;                  // the local blockchain
     std::vector<GeneratedTransaction> mempool_;     // unconfirmed transactions
@@ -99,9 +107,6 @@ private:
 
     // Compute the merkle root from a list of transactions
     std::string compute_merkle_root(const std::vector<GeneratedTransaction>& transactions) const;
-
-    // Simple SHA-256 placeholder (will be replaced with real crypto later)
-    std::string sha256(const std::string& data) const;
 
     // Check if a hash meets the difficulty target (has enough leading zeros)
     bool meets_difficulty(const std::string& hash, uint32_t difficulty) const;
