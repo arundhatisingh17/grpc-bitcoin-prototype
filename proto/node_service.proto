@@ -1,0 +1,65 @@
+//node_service.proto
+
+syntax = "proto3";
+package bitcoin;
+
+import "transaction.proto";
+import "block.proto";
+import "node.proto";
+
+// Request/response wrappers
+
+message BroadcastTransactionRequest {
+  Transaction transaction = 1;
+}
+
+message BroadcastTransactionResponse {
+  bool accepted = 1;       // whether the node accepted the transaction into its mempool
+  string message = 2;      // reason if rejected (e.g., "invalid signature")
+  string node_id = 3;      // which node sent this response
+}
+
+message BroadcastBlockRequest {
+  Block block = 1;
+}
+
+message BroadcastBlockResponse {
+  bool accepted = 1;
+  string message = 2;
+  string node_id = 3;
+}
+
+message GetBlockchainRequest {
+  uint64 start_index = 1;  // request blocks starting from this index (for partial sync)
+}
+
+message GetBlockchainResponse {
+  repeated Block blocks = 1;
+}
+
+// Check if a transaction has been mined into a block
+message GetTransactionStatusRequest {
+  bytes transaction_id = 1;
+}
+
+message GetTransactionStatusResponse {
+  bool confirmed = 1;      // true if the transaction is in a mined block
+  bytes block_hash = 2;    // which block it ended up in (empty if unconfirmed)
+  string node_id = 3;      // which node is reporting this status
+}
+
+// The gRPC service — function signatures that C++ will implement
+
+service NodeService {
+  // A wallet or node sends a new transaction to this node
+  rpc BroadcastTransaction(BroadcastTransactionRequest) returns (BroadcastTransactionResponse);
+
+  // A miner broadcasts a newly mined block to this node
+  rpc BroadcastBlock(BroadcastBlockRequest) returns (BroadcastBlockResponse);
+
+  // A new node requests the full (or partial) blockchain to sync up
+  rpc GetBlockchain(GetBlockchainRequest) returns (GetBlockchainResponse);
+
+  // Query whether a transaction has been confirmed in a block
+  rpc GetTransactionStatus(GetTransactionStatusRequest) returns (GetTransactionStatusResponse);
+}

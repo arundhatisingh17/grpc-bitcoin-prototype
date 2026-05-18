@@ -1,0 +1,18 @@
+//transaction.proto
+
+/* Exchange of bitcoin from person A to person B requires person A to sign the hash of the previous transaction,
+and the public key of the next owner and adding these to the end of the coin. The private key of the sender is what signs
+the hash of the previous transaction and the public key of the next owner.
+*/
+
+syntax = "proto3";
+package bitcoin;
+
+message Transaction {
+  bytes prev_transaction_hash = 1;  // hash of the previous transaction being spent
+  bytes sender_public_key = 2;     // public key of the sender (for signature verification)
+  bytes signature = 3;             // signed by sender's private key (proves ownership)
+  bytes recipient_public_key = 4;  // public key of the recipient (next owner)
+  uint64 amount = 5;               // amount being transferred
+  uint64 timestamp = 6;            // when this transaction was created
+}

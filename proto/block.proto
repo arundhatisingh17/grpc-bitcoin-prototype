@@ -1,0 +1,23 @@
+//block.proto
+
+/* A block bundles transactions together and chains them to the previous block.
+Miners verify incoming transactions and perform proof of work (finding a nonce
+such that the hash of the block header meets the difficulty target).
+The block contains everything needed to validate its contents and its
+position in the chain.
+*/
+
+syntax = "proto3";
+package bitcoin;
+
+import "transaction.proto";
+
+message Block {
+  bytes prev_block_hash = 1;           // hash of the previous block (for forming the chain)
+  bytes merkle_root = 2;               // hash of all transactions in this block
+  uint64 timestamp = 3;                // when this block was mined
+  uint32 difficulty_target = 4;        // how many leading zeros the block hash must have
+  uint64 nonce = 5;                    // value miners iterate to solve proof of work
+  repeated bytes transaction_ids = 6;  // array of transaction hashes included in this block
+  repeated Transaction transactions = 7; // the full transactions (for verification)
+}

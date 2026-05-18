@@ -1,0 +1,105 @@
+#ifndef NODE_H
+#define NODE_H
+
+#include <string>
+#include <vector>
+#include <cstdint>
+#include "difficulty_adjuster.h"
+#include "transaction_generator.h"
+
+/*
+ * Node
+ *
+ * Represents a single node (miner) in the Bitcoin network.
+ * Owns the local blockchain, mempool, and difficulty adjuster.
+ * This is the central class that ties all modules together.
+ */
+
+// C++ representation of a Block (mirrors block.proto)
+struct BlockData {
+    std::string prev_block_hash;
+    std::string merkle_root;
+    uint64_t timestamp;
+    uint32_t difficulty_target;
+    uint64_t nonce;
+    std::vector<std::string> transaction_ids;
+    std::vector<GeneratedTransaction> transactions;
+};
+
+// Info about a connected peer node
+struct PeerInfo {
+    std::string node_id;
+    std::string address;    // IP:port
+};
+
+class Node {
+public:
+    // Create a node with an ID, network address, and starting difficulty
+    Node(const std::string& node_id, const std::string& address, uint32_t initial_difficulty);
+
+    // --- Mempool ---
+    // Add a transaction to the mempool (pending, unconfirmed)
+    bool add_transaction_to_mempool(const GeneratedTransaction& tx);
+
+    // Get all transactions currently in the mempool
+    std::vector<GeneratedTransaction> get_mempool() const;
+
+    // --- Mining ---
+    // Mine a new block from the current mempool transactions.
+    // Performs Proof of Work and adds the block to the chain.
+    // Returns true if a block was successfully mined.
+    bool mine_block();
+
+    // --- Chain ---
+    // Get the full blockchain
+    std::vector<BlockData> get_chain() const;
+
+    // Get the latest block
+    BlockData get_latest_block() const;
+
+    // Get the current chain length
+    size_t get_chain_length() const;
+
+    // Add a block received from another node (after validation)
+    bool add_block(const BlockData& block);
+
+    // --- Validation ---
+    // Validate a block (check PoW, check transactions)
+    bool validate_block(const BlockData& block) const;
+
+    // --- Peers ---
+    void add_peer(const PeerInfo& peer);
+    std::vector<PeerInfo> get_peers() const;
+
+    // --- Info ---
+    std::string get_node_id() const;
+    std::string get_address() const;
+    uint32_t get_difficulty() const;
+
+private:
+    std::string node_id_;
+    std::string address_;
+
+    std::vector<BlockData> chain_;                  // the local blockchain
+    std::vector<GeneratedTransaction> mempool_;     // unconfirmed transactions
+    std::vector<PeerInfo> peers_;                   // known peer nodes
+    DifficultyAdjuster difficulty_adjuster_;        // adjusts PoW difficulty
+
+    // --- Private helpers ---
+    // Create the genesis block (first block in the chain, hardcoded)
+    BlockData create_genesis_block();
+
+    // Hash a block's header fields into a single string
+    std::string hash_block(const BlockData& block) const;
+
+    // Compute the merkle root from a list of transactions
+    std::string compute_merkle_root(const std::vector<GeneratedTransaction>& transactions) const;
+
+    // Simple SHA-256 placeholder (will be replaced with real crypto later)
+    std::string sha256(const std::string& data) const;
+
+    // Check if a hash meets the difficulty target (has enough leading zeros)
+    bool meets_difficulty(const std::string& hash, uint32_t difficulty) const;
+};
+
+#endif // NODE_H

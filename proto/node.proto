@@ -1,0 +1,10 @@
+//node.proto
+
+syntax = "proto3";
+package bitcoin;
+
+message Node {
+  string node_id = 1;      // unique identifier for this node
+  string address = 2;      // IP:port where this node is reachable
+  bytes public_key = 3;    // node's public key (for identity verification)
+}
